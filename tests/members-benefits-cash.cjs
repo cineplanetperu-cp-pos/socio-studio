@@ -1,9 +1,23 @@
+
+// Run the simulated browser with an isolated, unconfigured Firebase fixture.
+// Never boot the real Firebase project while testing local records.
+function isolatedAppScript(html) {
+  const script = html.split('<script>')[1].split('</script>')[0];
+  const configBlock = /\/\* FIREBASE_CONFIG_START \*\/[\s\S]*?\/\* FIREBASE_CONFIG_END \*\//;
+  if (!configBlock.test(script)) throw Error('Missing Firebase configuration block in test fixture.');
+  return script.replace(configBlock, () => [
+    '/* FIREBASE_CONFIG_START */',
+    'const CLOUD_CONFIG = {mode: "firebase", workspaceId: "cineplanet-peru", firebase: null};',
+    '/* FIREBASE_CONFIG_END */'
+  ].join('\n'));
+}
+
 const path=require('node:path');const appFile=path.join(__dirname,'..','dist','index.html');
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 const elements=new Map(),store=new Map();
 function element(id){if(!elements.has(id))elements.set(id,{value:id==='visitmovie'?'film-orbita':id==='visitcomplex'?'Cineplanet Cusco':'',innerHTML:'',textContent:'',hidden:false,disabled:false,dataset:{},classList:{add(){},remove(){},toggle(){}},querySelectorAll(){return []},addEventListener(){},showModal(){this.open=true},close(){this.open=false},focus(){},scrollIntoView(){}});return elements.get(id)}
 const sandbox={console,Intl,Date,Number,String,Object,Array,Math,JSON,RegExp,Map,Set,Error,structuredClone,setTimeout:()=>0,clearTimeout(){},TextEncoder,Uint8Array,crypto:require('node:crypto').webcrypto,document:{getElementById:element,querySelectorAll:()=>[],querySelector:()=>element('query'),addEventListener(){}},window:{addEventListener(){},print(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},matchMedia:()=>({matches:false})};
-const script=fs.readFileSync(appFile,'utf8').split('<script>')[1].split('</script>')[0];vm.createContext(sandbox);vm.runInContext(script,sandbox);vm.runInContext('startLocalMigration()',sandbox);vm.runInContext('adminUnlocked=true',sandbox);let checks=0;
+const script=isolatedAppScript(fs.readFileSync(appFile,'utf8'));vm.createContext(sandbox);vm.runInContext(script,sandbox);vm.runInContext('startLocalMigration()',sandbox);vm.runInContext('adminUnlocked=true',sandbox);let checks=0;
 function check(code){assert.equal(vm.runInContext(code,sandbox),true,code);checks++}
 check('Object.keys(data.members).length===0');check('!locked');check("validDate(today())");check("!validDate('2026-02-30')");check("!validDate('2099-01-01')");
 vm.runInContext(`globalThis.sample={dni:'01234567',nombre:'Ana Pérez',email:'ana@example.com',tel:'',puntos:10,ajuste:0,catManual:'',alta:today(),visitas:{}}`,sandbox);
