@@ -52,8 +52,17 @@ check("(()=>{try{validTicketImage('https://example.com/logo.png')}catch{return t
 const optimized=await run("optimizeTicketImage({type:'image/png',size:1000})");assert.equal(optimized,png);checks++;
 imageSize={width:200,height:800};await rejects("optimizeTicketImage({type:'image/png',size:1000})",/horizontal/);imageSize={width:800,height:200};await rejects("optimizeTicketImage({type:'image/svg+xml',size:1000})",/PNG/);await rejects("optimizeTicketImage({type:'image/png',size:6000000})",/5 MB/);
 check('saveTicketLogo(png)');run("globalThis.firstLogo=W().receipt.logoId");check("W().ticketImages[firstLogo]===png&&Object.keys(W().ticketImages).length===1");check("saveTicketLogo(png)&&W().receipt.logoId===firstLogo&&Object.keys(W().ticketImages).length===1");
+check("normalizeReceipt({...defaultReceipt(),logoWidthPct:40}).logoWidthPct===40");
+check("(()=>{const old=defaultReceipt();delete old.logoWidthPct;return normalizeReceipt(old).logoWidthPct===100})()");
+for(const width of [0,9,101,NaN,40.5,'40'])check("(()=>{try{normalizeReceipt({...defaultReceipt(),logoWidthPct:"+(Number.isNaN(width)?'NaN':JSON.stringify(width))+"})}catch{return true}return false})()");
+run("workspaceCommit(w=>w.receipt.logoWidthPct=40);settingsTab='ticket';renderSettings();$('ticketlogosize').value='25';$('ticketsettingsform').oninput()");
+check("$('ticketpreview').innerHTML.includes('width:25%')&&$('ticketlogosizevalue').textContent==='25 %'&&W().receipt.logoWidthPct===40");
 run("globalThis.cashLogo=registerCash({id:uid(),kind:'out',amount:12000,occurredAt:new Date().toISOString(),complex:'Cineplanet Cusco',register:'ODOO-01',reason:'Retiro de prueba',operator:'Ana',authorizedBy:'Luis',reference:''})");
-check("cashLogo.receipt.logoId===firstLogo&&cashTicketMarkup(cashLogo).includes(png)");check("saveTicketLogo(jpg)&&W().receipt.logoId!==firstLogo&&Object.keys(W().ticketImages).length===2");check("cashTicketMarkup(cashLogo).includes(png)&&!cashTicketMarkup(cashLogo).includes(jpg)");check("saveTicketLogo('')&&W().receipt.logoId===''&&W().ticketImages[firstLogo]===png&&Object.keys(W().ticketImages).length===1");
+check("cashLogo.receipt.logoWidthPct===40&&cashLogo.receipt.logoId===firstLogo&&cashTicketMarkup(cashLogo).includes(png)");check("saveTicketLogo(jpg)&&W().receipt.logoId!==firstLogo&&Object.keys(W().ticketImages).length===2");check("cashTicketMarkup(cashLogo).includes(png)&&!cashTicketMarkup(cashLogo).includes(jpg)");check("saveTicketLogo('')&&W().receipt.logoId===''&&W().ticketImages[firstLogo]===png&&Object.keys(W().ticketImages).length===1");
+run("workspaceCommit(w=>w.receipt.logoWidthPct=20)");
+check("cashTicketMarkup(cashLogo).includes('width:40%')&&W().receipt.logoWidthPct===20");
+check("cashTicketDocument(cashLogo).includes('width:40%')&&cashTicketDocument({...cashLogo,receipt:{...cashLogo.receipt,paper:'58'}}).includes('width:40%')");
+check("(()=>{const restored=validateFullBackup(JSON.parse(JSON.stringify(data)));return restored.workspace.receipt.logoWidthPct===20&&restored.workspace.cashMovements[0].receipt.logoWidthPct===40})()");
 check("cashTicketDocument(cashLogo).includes(png)&&!cashTicketDocument(cashLogo).includes('<script>')");
 check("(()=>{const restored=validateFullBackup(JSON.parse(JSON.stringify(data)));return restored.workspace.ticketImages[firstLogo]===png&&restored.workspace.complexes.length===45})()");check("!JSON.stringify(data).includes(adminAccount.hash)&&!JSON.stringify(data).includes(adminAccount.recoveryHash)");
 check("(()=>{const bad=structuredClone(data);delete bad.workspace.ticketImages[firstLogo];try{validateFullBackup(bad)}catch{return true}return false})()");
