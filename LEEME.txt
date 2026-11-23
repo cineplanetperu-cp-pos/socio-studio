@@ -1,0 +1,25 @@
+SOCIO STUDIO v8 · ACCESO Y DATOS COMPARTIDOS
+
+Abre la carpeta completa en Visual Studio Code y sigue GUIA_FIREBASE_GITHUB.md.
+Todavía debes crear tu proyecto Firebase y tu repositorio GitHub.
+
+Preparación: Node.js 24 LTS; Java 21 para emuladores.
+  npm ci
+  npm run build
+  npm run check
+  npm test
+  npm run test:rules
+
+Completa firebase.config.json con los valores públicos de tu aplicación web.
+Habilita Correo/Contraseña, crea Firestore Standard y autoriza tu UID según la guía.
+Antes de publicar: npm run check:release.
+La primera publicación debe incluir reglas, índices y Hosting.
+
+Código principal: dist/index.html.
+Conexión y sincronización: src/firebase-core.js y src/firebase-ui.js.
+HTML autónomo generado: dist/socio-cineplanet.html.
+
+Los datos de la nube se comparten entre equipos autorizados.
+El acceso local se conserva solo como vía explícita para exportar registros anteriores.
+Exporta el respaldo local y restáuralo una sola vez en la nube después de revisar su contenido.
+No subas respaldos comerciales, contraseñas ni claves privadas a GitHub.

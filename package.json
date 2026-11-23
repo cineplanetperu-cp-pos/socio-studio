@@ -1,0 +1,22 @@
+{
+  "name": "socio-studio",
+  "version": "8.0.0",
+  "private": true,
+  "description": "Acceso Firebase, socios y registros compartidos con control de concurrencia.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/prepare.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node tests/members-benefits-cash.cjs && node tests/admin-complexes-receipts.cjs && node tests/firebase-ui.cjs",
+    "test:cloud": "node tests/firebase-ui.cjs",
+    "test:rules": "firebase emulators:exec --project demo-socio-studio --only firestore,auth \"node tests/firebase-rules.mjs\"",
+    "check:release": "node scripts/check.mjs --release"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0",
+    "firebase": "13.2.0",
+    "firebase-tools": "15.35.0"
+  }
+}

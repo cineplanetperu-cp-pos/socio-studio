@@ -1,0 +1,10 @@
+{
+  "mode": "firebase",
+  "workspaceId": "cineplanet-peru",
+  "firebase": {
+    "apiKey": "AIzaSyD8t-idkjHD0WpX9mTczd5SwA0OwPhfYIs",
+    "authDomain": "socio-studio-peru.firebaseapp.com",
+    "projectId": "socio-studio-peru",
+    "appId": "1:90265600754:web:a657805525910cd280c66b"
+  }
+}
