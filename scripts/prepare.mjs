@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -19,6 +20,11 @@ writeFileSync(path.join(root,'dist/guia-firebase.html'),guideHTML(read('GUIA_FIR
 const names=['firebase.config.json','firestore.rules','firestore.indexes.json','package-lock.json','src/firebase-core.js','src/firebase-ui.js','tests/firebase-ui.cjs','tests/firebase-rules.mjs','README.md','GUIA_FIREBASE_GITHUB.md','LEEME.txt','docs/FUNCIONES.md','package.json','firebase.json','.firebaserc.example','.gitignore','.gitattributes','.github/workflows/check.yml','scripts/prepare.mjs','scripts/check.mjs','tests/members-benefits-cash.cjs','tests/admin-complexes-receipts.cjs','dist/index.html','dist/socio-cineplanet.html','dist/descargar.html','dist/guia-firebase.html','dist/404.html','dist/sw.js','dist/manifest.webmanifest','dist/icon-192.png','dist/icon-512.png','dist/.nojekyll'];
 const crcTable=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0});
 function crc32(buffer){let crc=0xffffffff;for(const value of buffer)crc=crcTable[(crc^value)&255]^(crc>>>8);return (crc^0xffffffff)>>>0}
+for (let i = names.length - 1; i >= 0; i--) {
+  if (!existsSync(path.join(root, names[i]))) {
+    names.splice(i, 1);
+  }
+}
 let offset=0;const local=[],central=[];
 for(const name of names){const bytes=read(name),compressed=deflateRawSync(bytes),filename=Buffer.from(name,'utf8'),crc=crc32(bytes);const head=Buffer.alloc(30);head.writeUInt32LE(0x04034b50);head.writeUInt16LE(20,4);head.writeUInt16LE(0x800,6);head.writeUInt16LE(8,8);head.writeUInt16LE(0x21,12);head.writeUInt32LE(crc,14);head.writeUInt32LE(compressed.length,18);head.writeUInt32LE(bytes.length,22);head.writeUInt16LE(filename.length,26);local.push(head,filename,compressed);const cent=Buffer.alloc(46);cent.writeUInt32LE(0x02014b50);cent.writeUInt16LE(20,4);cent.writeUInt16LE(20,6);cent.writeUInt16LE(0x800,8);cent.writeUInt16LE(8,10);cent.writeUInt16LE(0x21,14);cent.writeUInt32LE(crc,16);cent.writeUInt32LE(compressed.length,20);cent.writeUInt32LE(bytes.length,24);cent.writeUInt16LE(filename.length,28);cent.writeUInt32LE(offset,42);central.push(cent,filename);offset+=head.length+filename.length+compressed.length}
 const directory=Buffer.concat(central),end=Buffer.alloc(22);end.writeUInt32LE(0x06054b50);end.writeUInt16LE(names.length,8);end.writeUInt16LE(names.length,10);end.writeUInt32LE(directory.length,12);end.writeUInt32LE(offset,16);mkdirSync(path.join(root,'dist'),{recursive:true});writeFileSync(path.join(root,'dist/socio-studio-github.zip'),Buffer.concat([...local,directory,end]));
