@@ -1,7 +1,21 @@
+
+// Run the simulated browser with an isolated, unconfigured Firebase fixture.
+// Never boot the real Firebase project while testing local records.
+function isolatedAppScript(html) {
+  const script = html.split('<script>')[1].split('</script>')[0];
+  const configBlock = /\/\* FIREBASE_CONFIG_START \*\/[\s\S]*?\/\* FIREBASE_CONFIG_END \*\//;
+  if (!configBlock.test(script)) throw Error('Missing Firebase configuration block in test fixture.');
+  return script.replace(configBlock, () => [
+    '/* FIREBASE_CONFIG_START */',
+    'const CLOUD_CONFIG = {mode: "firebase", workspaceId: "cineplanet-peru", firebase: null};',
+    '/* FIREBASE_CONFIG_END */'
+  ].join('\n'));
+}
+
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
 const elements=new Map(),local=new Map();let localWrites=0,prints=0;
 function element(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',hidden:false,disabled:false,open:false,checked:false,dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},querySelectorAll(){return []},showModal(){this.open=true},close(){this.open=false},focus(){}});return elements.get(id)}
-const source=fs.readFileSync(path.join(__dirname,'..','dist/index.html'),'utf8'),script=source.split('<script>')[1].split('</script>')[0];
+const source=fs.readFileSync(path.join(__dirname,'..','dist/index.html'),'utf8'),script=isolatedAppScript(source);
 const sandbox={console,Date,Intl,JSON,Number,String,Object,Array,Math,RegExp,Set,Map,Promise,Error,TextEncoder,Uint8Array,structuredClone,crypto:require('node:crypto').webcrypto,setTimeout:()=>0,clearTimeout(){},document:{getElementById:element,querySelectorAll:()=>[],querySelector:()=>({textContent:source.split('<style>')[1].split('</style>')[0]}),addEventListener(){}},window:{addEventListener(){},print(){prints++}},localStorage:{getItem:k=>local.get(k)||null,setItem:(k,v)=>{localWrites++;local.set(k,v)}},navigator:{onLine:true},matchMedia:()=>({matches:false})};
 vm.createContext(sandbox);vm.runInContext(script,sandbox);const run=c=>vm.runInContext(c,sandbox);let checks=0;function check(c){assert.equal(run(c),true,c);checks++}const flush=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
